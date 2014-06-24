@@ -461,8 +461,11 @@ function touchHandler(event)
                               first.clientX, first.clientY, false, 
                               false, false, false, 0/*left*/, null);
 
-                                                                                 first.target.dispatchEvent(simulatedEvent);
-    event.preventDefault();
+                                                                           first.target.dispatchEvent(simulatedEvent);
+    if ( event.type == "touchmove" )
+    {
+        event.preventDefault();
+    }
 }
 
 function initTouchHandlers() 
