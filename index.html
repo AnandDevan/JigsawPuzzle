@@ -3,6 +3,7 @@
 <head>
 <title></title>
 </head>
+
 <body onresize='resize()' onload='onload()'  style='position: absolute; padding:0; margin:0; height: 100%; width:100%'>
     <table id='table'>
         <tr>
@@ -18,26 +19,20 @@
             <td id='cell11'></td>
         </tr>
     </table>
-    <button  type = 'button' id='scramble' onclick = 'onScrambleTiles()'> Scramble Tiles </button>
-    <input type='file' id='fileOpen' name='file' onchange = 'handleFileOpen()'> Load image </input>
+    <input type="file" name="image_src" id="fileOpen" onchange = 'handleFileOpen()' style='display:none'/>
+    <div style="text-align:center"> 
+    <input type='image' id = 'fileOpenButton' src='assets/images/pictures.png' align='middle'> </input>
+</div>
 </body>
 
 <script type='text/javascript'>
 
-var imageFileName = 'dora.jpg';
-function handleFileOpen( evt )
-{
-    var imageFile = document.getElementById('fileOpen').files[0];
-    var reader = new FileReader();
-    reader.onload = function(e) { 
-                        img.src = e.target.result;
-                        //onload();
-                    };
-    //(function(aImg) { return function(e) { aImg.src = e.target.result; }; })(img);
-    reader.readAsDataURL(imageFile);
-    tiles = [];
-    //onload();
-}
+var imageFileName = 'assets/images/image01.jpg';
+
+var curImageIndex = '01';
+var numAssetImages = 10;
+
+
 
 var tileCanvas = null, solutionCanvas = null;
 var img = null;
@@ -63,6 +58,7 @@ function onload()
     tileCanvas.addEventListener('mouseup', mouseup, false);
 
     initTouchHandlers();
+    initFileOpenHandler();
 }
 
 function loaded() 
@@ -96,8 +92,8 @@ function positionItemsOnPage()
     pageHeight = pageHeight - 10;
 
     var table = document.getElementById('table');
-    table.style.width = pageWidth + 'px';
-    table.style.height = pageHeight + 'px';
+    //table.style.width = pageWidth + 'px';
+    //table.style.height = pageHeight + 'px';
 
     var cellToPlaceSolution = null;
     if ( img.width < img.height )
@@ -110,6 +106,8 @@ function positionItemsOnPage()
     }
 
     cellToPlaceSolution.appendChild( solutionCanvas );
+
+    table.style.paddingLeft = table.style.paddingRight = table.style.paddingTop = table.style.paddingBottom = 0.0;
 
     if ( img.width < img.height )
     {
@@ -126,7 +124,10 @@ function positionItemsOnPage()
         solutionCanvas.width = tileCanvas.width;
         solutionCanvas.height = tileCanvas.height;
 
-        table.style.paddingRight = 0.5 * (pageWidth - tileCanvas.width) + 'px';
+        table.style.paddingRight = 0.5 * pageWidth - tileCanvas.width + 'px';
+        table.style.paddingLeft = 0.5 * pageWidth - tileCanvas.width + 'px';
+        table.style.paddingTop = 0.5 * (pageHeight - tileCanvas.height) + 'px';
+        table.style.paddingBottom = 0.5 * (pageHeight - tileCanvas.height) + 'px';
     }
     else
     {
@@ -143,7 +144,10 @@ function positionItemsOnPage()
         solutionCanvas.height = tileCanvas.height;
         solutionCanvas.width = tileCanvas.width;
 
-        table.style.paddingLeft = 0.5*(pageWidth - tileCanvas.width) + 'px';
+        table.style.paddingLeft = 0.5 * (pageWidth - tileCanvas.width) + 'px';
+        table.style.paddingRight = 0.5 * (pageWidth - tileCanvas.width) + 'px';
+        table.style.paddingTop = 0.5*pageHeight - tileCanvas.height + 'px';
+        table.style.paddingBottom = 0.5 * pageHeight - tileCanvas.height + 'px';
     }
 }
 
@@ -415,7 +419,9 @@ function isPuzzleSolved()
         }
     }
 
-    alert( "congrats" );
+    alert("congrats");
+    tiles = [];
+    img.src = getNextImage();
     return true;
 }
 
@@ -451,18 +457,15 @@ function touchHandler(event)
         default: return;
     }
 
-             //initMouseEvent(type, canBubble, cancelable, view, clickCount, 
-    //           screenX, screenY, clientX, clientY, ctrlKey, 
-    //           altKey, shiftKey, metaKey, button, relatedTarget);
-
     var simulatedEvent = document.createEvent("MouseEvent");
     simulatedEvent.initMouseEvent(type, true, true, window, 1, 
                               first.screenX, first.screenY, 
                               first.clientX, first.clientY, false, 
                               false, false, false, 0/*left*/, null);
 
-                                                                           first.target.dispatchEvent(simulatedEvent);
-    if ( event.type == "touchmove" )
+    first.target.dispatchEvent(simulatedEvent);
+
+    if ( event.type == "touchmove" && movingTile != null )
     {
         event.preventDefault();
     }
@@ -476,5 +479,47 @@ function initTouchHandlers()
     document.addEventListener("touchcancel", touchHandler, true);    
 }
 
+
+function getNextImage()
+{
+    function pad( num, size )
+    {
+        var s = num + "";
+        while (s.length < size) {
+            s = "0" + s;
+        }
+        return s;
+    }
+
+    var imageIndex = Math.floor(Math.random() * numAssetImages);
+    return 'assets/images/' + 'image' + pad( imageIndex, 2 ) + '.jpg';
+}
+
 </script>
+
+<script>
+    function handleFileOpen(evt) {
+        var imageFile = document.getElementById('fileOpen').files[0];
+        var reader = new FileReader();
+        reader.onload = function (e) { img.src = e.target.result; };
+        reader.readAsDataURL(imageFile);
+        tiles = [];
+    }
+
+function initFileOpenHandler()
+{
+    var fileSelect = document.getElementById("fileOpen");
+    var fileOpenButton = document.getElementById("fileOpenButton");
+
+    fileOpenButton.addEventListener( "click", function (e) {
+                                    if (fileSelect) {
+                                        fileSelect.click();
+                                    }
+                                    e.preventDefault(); // prevent navigation to "#"
+                                }, false );
+
+}
+
+</script>
+
 </html>
