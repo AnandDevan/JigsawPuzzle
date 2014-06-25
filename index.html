@@ -198,15 +198,17 @@ function redraw()
         ctx.drawImage( tile.canvas, tile.locX, tile.locY  );
     }
 
+    if ( destTileWhileMouseMove )
+    {
+        ctx.fillStyle = "rgba(255,180,0,1.0)";
+        ctx.fillRect( destTileWhileMouseMove.locX, destTileWhileMouseMove.locY, destTileWhileMouseMove.width, destTileWhileMouseMove.height );
+    }
+
     if ( movingTile )
     {
         ctx.drawImage( movingTile.canvas, movingTile.locX, movingTile.locY );
     }
 
-    if ( curDestTile )
-    {
-        ctx.fillRect( movingTile.locX, movingTile.locY, movingTile.width, movingTile.height );
-    }
 
     ctx.restore();
 }
@@ -278,7 +280,7 @@ function onScrambleTiles()
 
 var mouseX = 0.0, mouseY = 0.0;
 var tile0X = 0.0, tile0Y = 0.0;
-var movingTile = null, curDestTile = null;
+var movingTile = null, destTileWhileMouseMove = null;
 
 
 var mouseDownEvt = false;
@@ -315,6 +317,8 @@ function mousedown(evt) {
 function mouseup(evt) {
     console.log("mouseup");
 
+    destTileWhileMouseMove = null;
+
     if (mouseDownEvt == false) {
         return;
     }
@@ -324,6 +328,8 @@ function mouseup(evt) {
         mouseDownEvt = false;
         return;
     }
+
+
 
     mouseDownEvt = false;
     var destinationTile = null;
@@ -392,13 +398,13 @@ function mousemove(evt) {
         mouseX = curMouseX;
         mouseY = curMouseY;
 
-        curDestTile = null;
+        destTileWhileMouseMove = null;
         for (var i = 0; i < totalNumTiles; i++) {
             var tile = tiles[i];
             if (movingTile != tile) {
                 if (mouseX > tile.locX && mouseX < tile.locX + tile.canvas.width) {
                     if (mouseY > tile.locY && mouseY < tile.locY + tile.canvas.height) {
-                        curDestTile = tile;
+                        destTileWhileMouseMove = tile;
                         break;
                     }
                 }
