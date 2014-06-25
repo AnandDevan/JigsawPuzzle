@@ -5,24 +5,13 @@
 </head>
 
 <body onresize='resize()' onload='onload()'  style='position: absolute; padding:0; margin:0; height: 100%; width:100%'>
-    <table id='table'>
-        <tr>
-            <td id='cell00'>
-                <canvas id="gameCanvas" onmousedown = 'onmousedown1()' 'border:0px'></canvas>
-            </td>
-            <td id='cell01'> </td>
-        </tr>
-        <tr>
-            <td id='cell10'>
-                <canvas id="originalImageCanvas" style='border:0px'></canvas>
-            </td>
-            <td id='cell11'></td>
-        </tr>
-    </table>
+    <canvas id="gameCanvas" onmousedown = 'onmousedown1()' 'border:0px'></canvas>
+    <canvas id="originalImageCanvas" style='border:0px'></canvas>
+    
     <input type="file" name="image_src" id="fileOpen" onchange = 'handleFileOpen()' style='display:none'/>
     <div style="text-align:center"> 
-    <input type='image' id = 'fileOpenButton' src='assets/images/pictures.png' align='middle'> </input>
-</div>
+        <input type='image' id = 'fileOpenButton' src='assets/images/pictures.png' align='middle'> </input>
+    </div>
 </body>
 
 <script type='text/javascript'>
@@ -89,66 +78,40 @@ function positionItemsOnPage()
     pageHeight = w.innerHeight || e.clientHeight || g.clientHeight;
 
     // take away some height to accomodate the buttons
-    pageHeight = pageHeight - 10;
+    pageHeight -= 64;
 
-    var table = document.getElementById('table');
-    //table.style.width = pageWidth + 'px';
-    //table.style.height = pageHeight + 'px';
+    pageWidth -= 10.0;
 
-    var cellToPlaceSolution = null;
-    if ( img.width < img.height )
+    var imageRatio = img.width / img.height;
+    var pageRatio = pageWidth / pageHeight;
+
+    var imageScaleHorPacking = 1.0;
     {
-        cellToPlaceSolution = document.getElementById('cell01');
-    }
-    else
-    {
-        cellToPlaceSolution = document.getElementById('cell10');
-    }
-
-    cellToPlaceSolution.appendChild( solutionCanvas );
-
-    table.style.paddingLeft = table.style.paddingRight = table.style.paddingTop = table.style.paddingBottom = 0.0;
-
-    if ( img.width < img.height )
-    {
-        tileCanvas.width = 0.5*pageWidth;
-        tileCanvas.height = 0.95*tileCanvas.width*img.height/img.width;
-        if ( tileCanvas.height > pageHeight )
+        var width = 0.5 * pageWidth;
+        var height = 0.95 * width / imageRatio;
+        if ( height > pageHeight )
         {
-            tileCanvas.height = pageHeight;
-            tileCanvas.width = pageHeight*img.width/img.height;
+            height = pageHeight;
+            width = height*imageRatio;
         }
-
-        cell00.width = tileCanvas.width + 'px';
-        cellToPlaceSolution.width = tileCanvas.width + 'px';
-        solutionCanvas.width = tileCanvas.width;
-        solutionCanvas.height = tileCanvas.height;
-
-        table.style.paddingRight = 0.5 * pageWidth - tileCanvas.width + 'px';
-        table.style.paddingLeft = 0.5 * pageWidth - tileCanvas.width + 'px';
-        table.style.paddingTop = 0.5 * (pageHeight - tileCanvas.height) + 'px';
-        table.style.paddingBottom = 0.5 * (pageHeight - tileCanvas.height) + 'px';
+        imageScaleHorPacking = width / img.width;
     }
-    else
+
+    var imageScaleVerticalPacking = 1.0;
     {
-        tileCanvas.height = 0.5*pageHeight;
-        tileCanvas.width = 0.95*tileCanvas.height*img.width/img.height;
-        if ( tileCanvas.width > pageWidth )
+        var height = 0.5 * pageHeight;
+        var width = height * imageRatio;
+        if ( width > pageWidth )
         {
-            tileCanvas.width = pageWidth;
-            tileCanvas.height = tileCanvas.width * img.height / img.width;
+            width = pageWidth;
+            height = width / imageRatio;
         }
-
-        cell00.height = tileCanvas.height + 'px';
-        cellToPlaceSolution.height = tileCanvas.height + 'px';
-        solutionCanvas.height = tileCanvas.height;
-        solutionCanvas.width = tileCanvas.width;
-
-        table.style.paddingLeft = 0.5 * (pageWidth - tileCanvas.width) + 'px';
-        table.style.paddingRight = 0.5 * (pageWidth - tileCanvas.width) + 'px';
-        table.style.paddingTop = 0.5*pageHeight - tileCanvas.height + 'px';
-        table.style.paddingBottom = 0.5 * pageHeight - tileCanvas.height + 'px';
+        imageScaleVerticalPacking = width / img.width;
     }
+
+    var scale = Math.max( imageScaleHorPacking, imageScaleVerticalPacking );
+    tileCanvas.width = solutionCanvas.width = img.width * scale;
+    tileCanvas.height = solutionCanvas.height = img.height * scale;
 }
 
 function createTiles( tilesPerDir )
@@ -377,19 +340,6 @@ function mouseup(evt) {
         movingTile.locX = movingTileStartX;
         movingTile.locY = movingTileStartY;
         swapTiles( movingTile, destinationTile );
-/*        var row = movingTile.curRow;
-        movingTile.curRow = destinationTile.curRow;
-        destinationTile.curRow = row;
-
-        var col = movingTile.curCol;
-        movingTile.curCol = destinationTile.curCol;
-        destinationTile.curCol = col;
-
-        movingTile.locX = destinationTile.locX;
-        movingTile.locY = destinationTile.locY;
-
-        destinationTile.locX = movingTileStartX;
-        destinationTile.locY = movingTileStartY;*/
     }
     else if (movingTile) {
         movingTile.locX = movingTileStartX;
@@ -419,7 +369,6 @@ function isPuzzleSolved()
         }
     }
 
-    alert("congrats");
     tiles = [];
     img.src = getNextImage();
     return true;
