@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-<title></title>
+<title>Tiled Jigsaw Puzzle</title>
 </head>
 
 <body onresize='resize()' onload='onload()'  style='position: absolute; padding:0; margin:0; height: 100%; width:100%'>
@@ -10,7 +10,7 @@
     
     <input type="file" name="image_src" id="fileOpen" onchange = 'handleFileOpen()' style='display:none'/>
     <div style="text-align:center"> 
-        <input type='image' id = 'fileOpenButton' src='assets/images/photoBooth.png' align='middle'> </input>
+        <input type='image' id = 'fileOpenButton' src='assets/images/Photo-Booth-icon.png' align='middle'> </input>
     </div>
 </body>
 
@@ -18,12 +18,12 @@
 
 var numAssetImages = 11;
 var imageFileName = getNextImage();
-
-
+var redoImageFileName = "assets/images/redo.png"
 
 var tileCanvas = null, solutionCanvas = null;
 var img = null;
 var imageReady = false;
+var puzzleSolved = false;
 
 var numTilesPerDir = 3;
 var totalNumTiles = numTilesPerDir * numTilesPerDir;
@@ -31,14 +31,15 @@ var tiles = new Array();
 
 function onload()
 {
-    console.log("onload");
-
     tileCanvas = document.getElementById('gameCanvas');
     solutionCanvas = document.getElementById('originalImageCanvas');
 
     img = new Image();
     img.onload = function () { loaded(); }
     img.src = imageFileName;
+
+    redoImage = new Image();
+    redoImage.src = redoImageFileName;
 
     tileCanvas.addEventListener('mousemove', mousemove, false);
     tileCanvas.addEventListener('mousedown', mousedown, false);
@@ -56,6 +57,13 @@ function loaded()
     resize();
 }
 
+function loadNextPuzzle()
+{
+    puzzleSolved = false;
+    tiles = [];
+    img.src = getNextImage();
+}
+
 function resize()
 {
     if ( imageReady )
@@ -66,406 +74,424 @@ function resize()
     }
 }
 
-function positionItemsOnPage()
-{
-    var w = window,
-    d = document,
-    e = d.documentElement,
-    g = d.getElementsByTagName('body')[0],
-    pageWidth = w.innerWidth || e.clientWidth || g.clientWidth,
-    pageHeight = w.innerHeight || e.clientHeight || g.clientHeight;
-
-    // take away some height to accomodate the buttons
-    pageHeight -= 128;
-
-    pageWidth -= 10.0;
-
-    var imageRatio = img.width / img.height;
-    var pageRatio = pageWidth / pageHeight;
-
-    var imageScaleHorPacking = 1.0;
+    function positionItemsOnPage()
     {
-        var width = 0.5 * pageWidth;
-        var height = 0.95 * width / imageRatio;
-        if ( height > pageHeight )
+        var w = window,
+        d = document,
+        e = d.documentElement,
+        g = d.getElementsByTagName('body')[0],
+        pageWidth = w.innerWidth || e.clientWidth || g.clientWidth,
+        pageHeight = w.innerHeight || e.clientHeight || g.clientHeight;
+
+        // take away some height to accomodate the buttons
+        pageHeight -= 128;
+
+        pageWidth -= 10.0;
+
+        var imageRatio = img.width / img.height;
+        var pageRatio = pageWidth / pageHeight;
+
+        var imageScaleHorPacking = 1.0;
         {
-            height = pageHeight;
-            width = height*imageRatio;
-        }
-        imageScaleHorPacking = width / img.width;
-    }
-
-    var imageScaleVerticalPacking = 1.0;
-    {
-        var height = 0.5 * pageHeight;
-        var width = height * imageRatio;
-        if ( width > pageWidth )
-        {
-            width = pageWidth;
-            height = width / imageRatio;
-        }
-        imageScaleVerticalPacking = width / img.width;
-    }
-
-    var scale = Math.max( imageScaleHorPacking, imageScaleVerticalPacking );
-    tileCanvas.width = solutionCanvas.width = img.width * scale;
-    tileCanvas.height = solutionCanvas.height = img.height * scale;
-}
-
-function createTiles( tilesPerDir )
-{
-    if ( tilesPerDir == null )
-    {
-        alert("Invalid numTilePerDir input into createTiles");
-    }
- 
-    var gapBetweenTiles = tileCanvas.width*0.01;
-
-    var dx, dy, dw, dh;
-    var ix, iy, iw, ih;
-
-    dx = dy = 0.0;
-    dw = 1 / tilesPerDir * (tileCanvas.width - (tilesPerDir - 1) * gapBetweenTiles);
-    dh = 1 / tilesPerDir * (tileCanvas.height - (tilesPerDir - 1) * gapBetweenTiles);
-
-    ix = iy = 0.0;
-    iw = 1 / tilesPerDir * (img.width - (tilesPerDir - 1) * gapBetweenTiles);
-    ih = 1 / tilesPerDir * (img.height - (tilesPerDir - 1) * gapBetweenTiles);
-
-    for (var i = 0; i < tilesPerDir; i++) // col
-    {
-        iy = dy = 0.0;      
-        for (var j = 0; j < tilesPerDir; j++) // row
-        {
-            var tile = new Tile( j, i, img );
-            tile.locX = dx;
-            tile.locY = dy;
-            tile.canvas.width = dw;
-            tile.canvas.height = dh;
-            tiles.push( tile );
-
-            var renderContext = tile.canvas.getContext("2d");
-            renderContext.drawImage( img, ix, iy, iw, ih, 0.0, 0.0, dw, dh );
-            renderContext.restore();
-           
-            iy += ( ih + gapBetweenTiles );
-            dy += ( dh + gapBetweenTiles );
-        }
-                                                       
-        ix += ( iw + gapBetweenTiles );
-        dx += ( dw + gapBetweenTiles );
-    }
-
-    return tiles;
-}
-
-function resizeTiles()
-{
-    var gapBetweenTiles = tileCanvas.width*0.01;
-    var dw = 1/numTilesPerDir * ( tileCanvas.width - (numTilesPerDir-1)*gapBetweenTiles );
-    var dh = 1/numTilesPerDir * ( tileCanvas.height - (numTilesPerDir-1)*gapBetweenTiles );
-
-    for ( var i = 0; i < tiles.length; i++ )              
-    {
-        var tile = tiles[i];
-
-        tile.setSize( dw, dh );
-
-        tile.locX = tile.curCol * dw;
-        tile.locX += gapBetweenTiles;
- 
-        tile.locY = tile.curRow * dh;
-        tile.locY += gapBetweenTiles;
-
-        loadImageForTile( tile, img, numTilesPerDir );
-    }
-}
-
-
-function redraw()
-{
-    var renderContext = solutionCanvas.getContext("2d");
-    renderContext.drawImage( img, 0.0, 0.0, solutionCanvas.width, solutionCanvas.height );
-    renderContext.restore();
-
-    var ctx = tileCanvas.getContext("2d");
-    ctx.fillStyle = '#220000';
-    ctx.fillRect(0, 0, tileCanvas.width, tileCanvas.height);
-
-    for (var i = 0; i < tiles.length; i++)
-    {
-        var tile = tiles[i];
-        ctx.drawImage( tile.canvas, tile.locX, tile.locY  );
-    }
-
-    if ( destTileWhileMouseMove )
-    {
-        ctx.fillStyle = "rgba(255,180,0,1.0)";
-        ctx.fillRect( destTileWhileMouseMove.locX, destTileWhileMouseMove.locY, destTileWhileMouseMove.width, destTileWhileMouseMove.height );
-    }
-
-    if ( movingTile )
-    {
-        ctx.drawImage( movingTile.canvas, movingTile.locX, movingTile.locY );
-    }
-
-
-    ctx.restore();
-}
-
-function onmousedown1(e)
-{
-    console.log( "mousedown1");
-}
-
-////////////////////////////////////////
-function Tile( row, col, image )
-{
-    this.row = this.curRow = row;
-    this.col = this.curCol = col;
-    this.image = image;
-
-    this.locX = this.locY = 0.0;             
-    this.canvas = document.createElement( 'canvas' );
-}
-
-Tile.prototype.setSize = function( width, height )
-{
-    this.width = width;
-    this.height = height;
-    this.canvas.width = width;
-    this.canvas.height = height;
-}
-
-function loadImageForTile( tile, image, numTilesPerDir )
-{
-    var imgTileWidth = image.width / numTilesPerDir;
-    var imgTileHeight = image.height / numTilesPerDir
-    var imgTileX = tile.col * imgTileWidth;
-    var imgTileY = tile.row * imgTileHeight;
-
-    var renderContext = tile.canvas.getContext("2d");
-    renderContext.fillStyle = '#220AA0';
-    renderContext.fillRect(0, 0, tile.canvas.width, tile.canvas.height);
-
-    renderContext.drawImage(image, imgTileX, imgTileY, imgTileWidth, imgTileHeight, 0.0, 0.0, tile.canvas.width, tile.canvas.height);    
-    renderContext.restore();
-}
-
-
-////////////////////////////////////////////
-
-function swapTiles( tile0, tile1 )
-{
-   var tile0Row = tile0.curRow, tile0Col = tile0.curCol;
-    tile0.curRow = tile1.curRow; tile0.curCol = tile1.curCol;
-    tile1.curRow = tile0Row; tile1.curCol = tile0Col;
-
-    var tile0LocX = tile0.locX, tile0LocY = tile0.locY;
-    tile0.locX = tile1.locX; tile0.locY = tile1.locY;
-    tile1.locX = tile0LocX; tile1.locY = tile0LocY;
-}
-
-function onScrambleTiles()
-{
-    for ( var i = 0; i < totalNumTiles; i++ )
-    {
-        var dest = Math.floor( totalNumTiles*Math.random() );
-        var tile0 = tiles[i], tile1 = tiles[dest];
-        swapTiles( tile0, tile1 ); 
-    }
-
-    redraw();
-}
-
-var mouseX = 0.0, mouseY = 0.0;
-var tile0X = 0.0, tile0Y = 0.0;
-var movingTile = null, destTileWhileMouseMove = null;
-
-
-var mouseDownEvt = false;
-var movingTileStartX, movingTileStartY;
-
-function mousedown(evt) {
-    console.log("mousedown");
-    if (mouseDownEvt) {
-        return;
-    }
-
-    mouseDownEvt = true;
-    mouseX = evt.clientX - tileCanvas.clientLeft;
-    mouseY = evt.clientY - tileCanvas.clientTop;
-
-    var rect = tileCanvas.getBoundingClientRect();
-    mouseX -= rect.left;
-    mouseY -= rect.top;
-
-    for (var i = 0; i < totalNumTiles; i++) {
-        var tile = tiles[i];
-        if (mouseX > tile.locX && mouseX < tile.locX + tile.canvas.width) {
-            if (mouseY > tile.locY && mouseY < tile.locY + tile.canvas.height) {
-                movingTile = tile;
-                movingTileStartX = tile.locX;
-                movingTileStartY = tile.locY;
-                movingTile.canvas.globalAlpha = 0.5
-                break;
+            var width = 0.5 * pageWidth;
+            var height = 0.95 * width / imageRatio;
+            if ( height > pageHeight )
+            {
+                height = pageHeight;
+                width = height*imageRatio;
             }
+            imageScaleHorPacking = width / img.width;
+        }
+
+        var imageScaleVerticalPacking = 1.0;
+        {
+            var height = 0.5 * pageHeight;
+            var width = height * imageRatio;
+            if ( width > pageWidth )
+            {
+                width = pageWidth;
+                height = width / imageRatio;
+            }
+            imageScaleVerticalPacking = width / img.width;
+        }
+
+        var scale = Math.max( imageScaleHorPacking, imageScaleVerticalPacking );
+        tileCanvas.width = solutionCanvas.width = img.width * scale;
+        tileCanvas.height = solutionCanvas.height = img.height * scale;
+    }
+
+    function createTiles( tilesPerDir )
+    {
+        if ( tilesPerDir == null )
+        {
+            alert("Invalid numTilePerDir input into createTiles");
+        }
+ 
+        var gapBetweenTiles = tileCanvas.width*0.01;
+
+        var dx, dy, dw, dh;
+        var ix, iy, iw, ih;
+
+        dx = dy = 0.0;
+        dw = 1 / tilesPerDir * (tileCanvas.width - (tilesPerDir - 1) * gapBetweenTiles);
+        dh = 1 / tilesPerDir * (tileCanvas.height - (tilesPerDir - 1) * gapBetweenTiles);
+
+        ix = iy = 0.0;
+        iw = 1 / tilesPerDir * (img.width - (tilesPerDir - 1) * gapBetweenTiles);
+        ih = 1 / tilesPerDir * (img.height - (tilesPerDir - 1) * gapBetweenTiles);
+
+        for (var i = 0; i < tilesPerDir; i++) // col
+        {
+            iy = dy = 0.0;      
+            for (var j = 0; j < tilesPerDir; j++) // row
+            {
+                var tile = new Tile( j, i, img );
+                tile.locX = dx;
+                tile.locY = dy;
+                tile.canvas.width = dw;
+                tile.canvas.height = dh;
+                tiles.push( tile );
+
+                var renderContext = tile.canvas.getContext("2d");
+                renderContext.drawImage( img, ix, iy, iw, ih, 0.0, 0.0, dw, dh );
+                renderContext.restore();
+           
+                iy += ( ih + gapBetweenTiles );
+                dy += ( dh + gapBetweenTiles );
+            }
+                                                       
+            ix += ( iw + gapBetweenTiles );
+            dx += ( dw + gapBetweenTiles );
+        }
+
+        return tiles;
+    }
+
+    function resizeTiles()
+    {
+        var gapBetweenTiles = tileCanvas.width*0.01;
+        var dw = 1/numTilesPerDir * ( tileCanvas.width - (numTilesPerDir-1)*gapBetweenTiles );
+        var dh = 1/numTilesPerDir * ( tileCanvas.height - (numTilesPerDir-1)*gapBetweenTiles );
+
+        for ( var i = 0; i < tiles.length; i++ )              
+        {
+            var tile = tiles[i];
+
+            tile.setSize( dw, dh );
+
+            tile.locX = tile.curCol * dw;
+            tile.locX += gapBetweenTiles;
+ 
+            tile.locY = tile.curRow * dh;
+            tile.locY += gapBetweenTiles;
+
+            loadImageForTile( tile, img, numTilesPerDir );
         }
     }
-}
 
-function mouseup(evt) {
-    console.log("mouseup");
 
-    destTileWhileMouseMove = null;
+    function redraw()
+    {
+        if (puzzleSolved)
+        {
+            tileCanvas.globalAlpha = 0.1;
+        }
 
-    if (mouseDownEvt == false) {
-        return;
+        var renderContext = solutionCanvas.getContext("2d");
+        renderContext.drawImage( img, 0.0, 0.0, solutionCanvas.width, solutionCanvas.height );
+        renderContext.restore();
+
+        var ctx = tileCanvas.getContext("2d");
+        ctx.fillStyle = '#220000';
+        ctx.fillRect(0, 0, tileCanvas.width, tileCanvas.height);
+
+        for (var i = 0; i < tiles.length; i++)
+        {
+            var tile = tiles[i];
+            ctx.drawImage( tile.canvas, tile.locX, tile.locY  );
+        }
+
+        if ( destTileWhileMouseMove )
+        {
+            ctx.fillStyle = "rgba(255,180,0,1.0)";
+            ctx.fillRect( destTileWhileMouseMove.locX, destTileWhileMouseMove.locY, destTileWhileMouseMove.width, destTileWhileMouseMove.height );
+        }
+
+        if ( movingTile )
+        {
+            ctx.drawImage( movingTile.canvas, movingTile.locX, movingTile.locY );
+        }
+
+        if (puzzleSolved)
+        {
+            ctx.drawImage(redoImage, 0.5 * (solutionCanvas.width - redoImage.width), 0.5 * (solutionCanvas.height - redoImage.height) );
+            tileCanvas.globalAlpha = 1.0;
+        }
+
+        ctx.restore();
     }
 
-    if (movingTile == null) {
-        alert(false);
-        mouseDownEvt = false;
-        return;
+    function onmousedown1(e)
+    {
+    }
+
+    ////////////////////////////////////////
+    function Tile( row, col, image )
+    {
+        this.row = this.curRow = row;
+        this.col = this.curCol = col;
+        this.image = image;
+
+        this.locX = this.locY = 0.0;             
+        this.canvas = document.createElement( 'canvas' );
+    }
+
+    Tile.prototype.setSize = function( width, height )
+    {
+        this.width = width;
+        this.height = height;
+        this.canvas.width = width;
+        this.canvas.height = height;
+    }
+
+    function loadImageForTile( tile, image, numTilesPerDir )
+    {
+        var imgTileWidth = image.width / numTilesPerDir;
+        var imgTileHeight = image.height / numTilesPerDir
+        var imgTileX = tile.col * imgTileWidth;
+        var imgTileY = tile.row * imgTileHeight;
+
+        var renderContext = tile.canvas.getContext("2d");
+        renderContext.fillStyle = '#220AA0';
+        renderContext.fillRect(0, 0, tile.canvas.width, tile.canvas.height);
+
+        renderContext.drawImage(image, imgTileX, imgTileY, imgTileWidth, imgTileHeight, 0.0, 0.0, tile.canvas.width, tile.canvas.height);    
+        renderContext.restore();
     }
 
 
+    ////////////////////////////////////////////
 
-    mouseDownEvt = false;
-    var destinationTile = null;
-    for (var i = 0; i < totalNumTiles; i++) {
-        var tile = tiles[i];
-        if (movingTile != tile) {
+    function swapTiles( tile0, tile1 )
+    {
+        var tile0Row = tile0.curRow, tile0Col = tile0.curCol;
+        tile0.curRow = tile1.curRow; tile0.curCol = tile1.curCol;
+        tile1.curRow = tile0Row; tile1.curCol = tile0Col;
+
+        var tile0LocX = tile0.locX, tile0LocY = tile0.locY;
+        tile0.locX = tile1.locX; tile0.locY = tile1.locY;
+        tile1.locX = tile0LocX; tile1.locY = tile0LocY;
+    }
+
+    function onScrambleTiles()
+    {
+        // fisher - yates algorithm to shuffle an array
+        for (var i = totalNumTiles - 1; i > 0; i--)
+        {
+            var dest = Math.floor(i * Math.random());
+            var tile0 = tiles[i], tile1 = tiles[dest];
+            swapTiles(tile0, tile1);
+        }
+
+        redraw();
+    }
+
+    var mouseX = 0.0, mouseY = 0.0;
+    var tile0X = 0.0, tile0Y = 0.0;
+    var movingTile = null, destTileWhileMouseMove = null;
+
+
+    var mouseDownEvt = false;
+    var movingTileStartX, movingTileStartY;
+
+    function mousedown(evt) {
+        if (mouseDownEvt)
+        {
+            return;
+        }
+
+        mouseX = evt.clientX - tileCanvas.clientLeft;
+        mouseY = evt.clientY - tileCanvas.clientTop;
+
+        var rect = tileCanvas.getBoundingClientRect();
+        mouseX -= rect.left;
+        mouseY -= rect.top;
+
+        if (puzzleSolved)
+        {
+            if (0.5 * (tileCanvas.width - redoImage.width) < mouseX && mouseX < 0.5 * (tileCanvas.width + redoImage.width))
+            {
+                if (0.5 * (tileCanvas.height - redoImage.height) < mouseY && mouseY < 0.5 * (tileCanvas.height + redoImage.height))
+                {
+                    loadNextPuzzle();
+                    return;
+                }
+            }
+            return;
+        }
+
+        mouseDownEvt = true;
+
+        for (var i = 0; i < totalNumTiles; i++) {
+            var tile = tiles[i];
             if (mouseX > tile.locX && mouseX < tile.locX + tile.canvas.width) {
                 if (mouseY > tile.locY && mouseY < tile.locY + tile.canvas.height) {
-                    destinationTile = tile;
+                    movingTile = tile;
+                    movingTileStartX = tile.locX;
+                    movingTileStartY = tile.locY;
+                    movingTile.canvas.globalAlpha = 0.5
                     break;
                 }
             }
         }
     }
 
-    // swap tiles
-    if (movingTile && destinationTile) {
-        movingTile.locX = movingTileStartX;
-        movingTile.locY = movingTileStartY;
-        swapTiles( movingTile, destinationTile );
-    }
-    else if (movingTile) {
-        movingTile.locX = movingTileStartX;
-        movingTile.locY = movingTileStartY;
-    }
-
-    //resizeTiles();
-    redraw();
-    movingTile = destinationTile = null;
-    isPuzzleSolved();
-}
-
-function isPuzzleSolved()
-{
-    var  k = 0;
-    for ( var i = 0; i < numTilesPerDir; i++ )
-    {
-        for ( var j = 0; j < numTilesPerDir; j++ )
-        {
-            var tile = tiles[k];
-            k++;
-
-            if ( tile.curCol != i || tile.curRow != j )
-            {
-                return false;
-            }
-        }
-    }
-
-    tiles = [];
-    img.src = getNextImage();
-    return true;
-}
-
-function mousemove(evt) {
-    console.log("mousemove");
-
-    if (mouseDownEvt && movingTile) {
-        var rect = tileCanvas.getBoundingClientRect();
-        var curMouseX = evt.clientX - rect.left;
-        var curMouseY = evt.clientY - rect.top;
-
-        movingTile.locX += (curMouseX - mouseX);
-        movingTile.locY += (curMouseY - mouseY);
-
-        mouseX = curMouseX;
-        mouseY = curMouseY;
-
+    function mouseup(evt) {
         destTileWhileMouseMove = null;
+
+        if (mouseDownEvt == false) {
+            return;
+        }
+
+        if (movingTile == null) {
+            alert(false);
+            mouseDownEvt = false;
+            return;
+        }
+
+
+
+        mouseDownEvt = false;
+        var destinationTile = null;
         for (var i = 0; i < totalNumTiles; i++) {
             var tile = tiles[i];
             if (movingTile != tile) {
                 if (mouseX > tile.locX && mouseX < tile.locX + tile.canvas.width) {
                     if (mouseY > tile.locY && mouseY < tile.locY + tile.canvas.height) {
-                        destTileWhileMouseMove = tile;
+                        destinationTile = tile;
                         break;
                     }
                 }
             }
         }
 
+        // swap tiles
+        if (movingTile && destinationTile) {
+            movingTile.locX = movingTileStartX;
+            movingTile.locY = movingTileStartY;
+            swapTiles( movingTile, destinationTile );
+        }
+        else if (movingTile) {
+            movingTile.locX = movingTileStartX;
+            movingTile.locY = movingTileStartY;
+        }
+
+        movingTile = destinationTile = null;
+        isPuzzleSolved();
         redraw();
     }
-}
 
-
-function touchHandler(event)
-{
-    var touches = event.changedTouches,
-        first = touches[0],
-        type = "";
-         switch(event.type)
+    function isPuzzleSolved()
     {
-        case "touchstart": type = "mousedown"; break;
-        case "touchmove":  type="mousemove"; break;        
-        case "touchend":   type="mouseup"; break;
-        default: return;
-    }
+        var  k = 0;
+        for ( var i = 0; i < numTilesPerDir; i++ )
+        {
+            for ( var j = 0; j < numTilesPerDir; j++ )
+            {
+                var tile = tiles[k];
+                k++;
 
-    var simulatedEvent = document.createEvent("MouseEvent");
-    simulatedEvent.initMouseEvent(type, true, true, window, 1, 
-                              first.screenX, first.screenY, 
-                              first.clientX, first.clientY, false, 
-                              false, false, false, 0/*left*/, null);
-
-    first.target.dispatchEvent(simulatedEvent);
-
-    if ( event.type == "touchmove" && movingTile != null )
-    {
-        event.preventDefault();
-    }
-}
-
-function initTouchHandlers() 
-{
-    document.addEventListener("touchstart", touchHandler, true);
-    document.addEventListener("touchmove", touchHandler, true);
-    document.addEventListener("touchend", touchHandler, true);
-    document.addEventListener("touchcancel", touchHandler, true);    
-}
-
-
-function getNextImage()
-{
-    function pad( num, size )
-    {
-        var s = num + "";
-        while (s.length < size) {
-            s = "0" + s;
+                if ( tile.curCol != i || tile.curRow != j )
+                {
+                    return false;
+                }
+            }
         }
-        return s;
+
+        puzzleSolved = true;
+        return true;
     }
 
-    var imageIndex = Math.floor(Math.random() * numAssetImages);
-    return 'assets/images/' + 'image' + pad( imageIndex, 2 ) + '.jpg';
-}
+    function mousemove(evt) {
+        if (mouseDownEvt && movingTile) {
+            var rect = tileCanvas.getBoundingClientRect();
+            var curMouseX = evt.clientX - rect.left;
+            var curMouseY = evt.clientY - rect.top;
+
+            movingTile.locX += (curMouseX - mouseX);
+            movingTile.locY += (curMouseY - mouseY);
+
+            mouseX = curMouseX;
+            mouseY = curMouseY;
+
+            destTileWhileMouseMove = null;
+            for (var i = 0; i < totalNumTiles; i++) {
+                var tile = tiles[i];
+                if (movingTile != tile) {
+                    if (mouseX > tile.locX && mouseX < tile.locX + tile.canvas.width) {
+                        if (mouseY > tile.locY && mouseY < tile.locY + tile.canvas.height) {
+                            destTileWhileMouseMove = tile;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            redraw();
+        }
+    }
+
+
+    function touchHandler(event)
+    {
+        var touches = event.changedTouches,
+            first = touches[0],
+            type = "";
+        switch(event.type)
+        {
+            case "touchstart": type = "mousedown"; break;
+            case "touchmove":  type="mousemove"; break;        
+            case "touchend":   type="mouseup"; break;
+            default: return;
+        }
+
+        var simulatedEvent = document.createEvent("MouseEvent");
+        simulatedEvent.initMouseEvent(type, true, true, window, 1, 
+                                  first.screenX, first.screenY, 
+                                  first.clientX, first.clientY, false, 
+                                  false, false, false, 0/*left*/, null);
+
+        first.target.dispatchEvent(simulatedEvent);
+
+        if ( event.type == "touchmove" && movingTile != null )
+        {
+            event.preventDefault();
+        }
+    }
+
+    function initTouchHandlers() 
+    {
+        document.addEventListener("touchstart", touchHandler, true);
+        document.addEventListener("touchmove", touchHandler, true);
+        document.addEventListener("touchend", touchHandler, true);
+        document.addEventListener("touchcancel", touchHandler, true);    
+    }
+
+
+    function getNextImage()
+    {
+        function pad( num, size )
+        {
+            var s = num + "";
+            while (s.length < size) {
+                s = "0" + s;
+            }
+            return s;
+        }
+
+        var imageIndex = Math.floor(Math.random() * numAssetImages);
+        return 'assets/images/' + 'image' + pad( imageIndex, 2 ) + '.jpg';
+    }
 
 </script>
 
@@ -476,6 +502,7 @@ function getNextImage()
         reader.onload = function (e) { img.src = e.target.result; };
         reader.readAsDataURL(imageFile);
         tiles = [];
+        puzzleSolved = false;
     }
 
 function initFileOpenHandler()
