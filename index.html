@@ -8,10 +8,14 @@
     <canvas id="tileCanvas"></canvas>
     <canvas id="solutionCanvas"></canvas>
     
-    <input type="file" name="image_src" id="fileOpen" onchange = 'handleFileOpen()' style='display:none'/>
+    <input type="file" name="image_src" id="fileOpen" onchange = 'handleFileOpen()' accept="image/*" style='display:none'/>
     <div> 
         <input type='image' id = 'fileOpenButton' src='assets/images/selectPhoto.png' align='middle'> </input>
-    </div>
+    </div>	
+	<audio id='tileSnapAudio'>  
+		<source src="assets/audio/tileSnap.wav">
+		<source src="assets/audio/tileSnap.mp3">
+	</audio>	
 </body>
 
 <script type='text/javascript'>
@@ -377,8 +381,10 @@ function resize()
             movingTile.locX = movingTileStartX;
             movingTile.locY = movingTileStartY;
             swapTiles( movingTile, destinationTile );
-            //var snapSound = new Audio( tileSnapSound );
-            //snapSound.play();
+
+			var audio = document.getElementById( 'tileSnapAudio' );
+			audio.currentTime = 0;
+			audio.play();
         }
         else if (movingTile) {
             movingTile.locX = movingTileStartX;
