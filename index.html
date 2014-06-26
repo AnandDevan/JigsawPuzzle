@@ -383,8 +383,8 @@ function resize()
             swapTiles( movingTile, destinationTile );
 
 			var audio = document.getElementById( 'tileSnapAudio' );
-			audio.currentTime = 0;
-			audio.play();
+            //audio.currentTime = 0;
+     		audio.play();
         }
         else if (movingTile) {
             movingTile.locX = movingTileStartX;
