@@ -12,7 +12,7 @@
     <div> 
         <input type='image' id = 'fileOpenButton' src='assets/images/selectPhoto.png' align='middle'> </input>
     </div>	
-	<audio id='tileSnapAudio' controls>  
+	<audio id='tileSnapAudio'>  
 		<source src="assets/audio/tileSnap.wav">
 		<source src="assets/audio/tileSnap.mp3">
 	</audio>	
@@ -383,8 +383,13 @@ function resize()
             swapTiles( movingTile, destinationTile );
 
 			var audio = document.getElementById( 'tileSnapAudio' );
+<<<<<<< HEAD
             //audio.currentTime = 0;
      		audio.play();
+=======
+			//audio.currentTime = 0;
+			audio.play();
+>>>>>>> master
         }
         else if (movingTile) {
             movingTile.locX = movingTileStartX;
