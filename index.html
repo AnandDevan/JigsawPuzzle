@@ -19,6 +19,8 @@
 var numAssetImages = 11;
 var imageFileName = getNextImage();
 var redoImageFileName = "assets/images/redo.png"
+var tileSnapSound = 'assets/audio/tileSnap.m4a';
+
 
 var tileCanvas = null, solutionCanvas = null;
 var img = null;
@@ -328,7 +330,7 @@ function resize()
 
         mouseDownEvt = true;
 
-        for (var i = 0; i < totalNumTiles; i++) {
+        for (var i = 0; i < tiles.length; i++) {
             var tile = tiles[i];
             if (mouseX > tile.locX && mouseX < tile.locX + tile.canvas.width) {
                 if (mouseY > tile.locY && mouseY < tile.locY + tile.canvas.height) {
@@ -375,6 +377,8 @@ function resize()
             movingTile.locX = movingTileStartX;
             movingTile.locY = movingTileStartY;
             swapTiles( movingTile, destinationTile );
+            var snapSound = new Audio( tileSnapSound );
+            snapSound.play();
         }
         else if (movingTile) {
             movingTile.locX = movingTileStartX;
