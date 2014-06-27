@@ -15,7 +15,11 @@
 	<audio id='tileSnapAudio'>  
 		<source src="assets/audio/tileSnap.wav">
 		<source src="assets/audio/tileSnap.mp3">
-	</audio>	
+	</audio>
+    <audio id='successAudio'>
+        <source src="assets/audio/success.wav">
+        <source src="assets/audio/success.mp3">        
+    </audio>
 </body>
 
 <script type='text/javascript'>
@@ -90,9 +94,8 @@ function resize()
         pageHeight = w.innerHeight || e.clientHeight || g.clientHeight;
 
         // take away some height to accomodate the buttons
-        pageHeight -= 128;
-
-        pageWidth -= 10.0;
+        pageHeight -= 70; // camera icon size
+        //pageWidth -= 10.0;
 
         var imageRatio = img.width / img.height;
         var pageRatio = pageWidth / pageHeight;
@@ -383,7 +386,6 @@ function resize()
             swapTiles( movingTile, destinationTile );
 
             var audio = document.getElementById( 'tileSnapAudio' );
-            //audio.currentTime = 0;
             audio.play();
         }
         else if (movingTile) {
@@ -393,6 +395,11 @@ function resize()
 
         movingTile = destinationTile = null;
         isPuzzleSolved();
+        if ( puzzleSolved )
+        { 
+            var successSound = document.getElementById( 'successAudio' );
+            successSound.play();
+        }
         redraw();
     }
 
