@@ -95,7 +95,7 @@ function resize()
 
         // take away some height to accomodate the buttons
         pageHeight -= 70; // camera icon size
-        //pageWidth -= 10.0;
+        pageWidth -= 2.0;
 
         var imageRatio = img.width / img.height;
         var pageRatio = pageWidth / pageHeight;
@@ -125,6 +125,7 @@ function resize()
         }
 
         var scale = Math.max( imageScaleHorPacking, imageScaleVerticalPacking );
+        scale = scale - 1/img.width;
         tileCanvas.width = solutionCanvas.width = img.width * scale;
         tileCanvas.height = solutionCanvas.height = img.height * scale;
     }
